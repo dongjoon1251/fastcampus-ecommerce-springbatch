@@ -1,1 +1,3 @@
 rootProject.name = 'fastcampus-ecommerce-springbatch'
+include 'ecommerce-batch'
+
