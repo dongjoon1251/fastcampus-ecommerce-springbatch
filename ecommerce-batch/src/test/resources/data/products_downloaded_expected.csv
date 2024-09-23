@@ -1,0 +1,3 @@
+productId,sellerId,category,productName,salesStartDate,salesEndDate,productStatus,brand,manufacturer,salesPrice,stockQuantity,createdAt,updatedAt
+1,1,식품,햇반,2023-07-04,2026-05-28,AVAILABLE,아모레퍼시픽1,나이키코리아1,25154,439,2024-09-19T14:24:41.404,2024-09-19T14:24:41.404
+2,2,식품,햇반,2023-07-04,2026-05-28,AVAILABLE,아모레퍼시픽2,나이키코리아2,25154,439,2024-09-19T14:24:41.404,2024-09-19T14:24:41.404

@@ -32,6 +32,19 @@ public class Product {
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 
+  public static Product of(String productId, Long sellerId, String category, String productName,
+      LocalDate salesStartDate,
+      LocalDate salesEndDate, ProductStatus productStatus, String brand,
+      String manufacturer, int salesPrice,
+      int stockQuantity,
+      LocalDateTime createdAt, LocalDateTime updatedAt) {
+    return new Product(productId, sellerId, category, productName, salesStartDate, salesEndDate,
+        productStatus.name(), brand, manufacturer,
+        salesPrice, stockQuantity,
+        createdAt,
+        updatedAt);
+  }
+
   public static Product from(ProductUploadCsvRow row) {
     LocalDateTime now = LocalDateTime.now();
     return new Product(
