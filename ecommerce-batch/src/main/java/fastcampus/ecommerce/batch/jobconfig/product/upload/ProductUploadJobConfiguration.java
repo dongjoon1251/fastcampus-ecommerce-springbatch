@@ -3,15 +3,21 @@ package fastcampus.ecommerce.batch.jobconfig.product.upload;
 
 import fastcampus.ecommerce.batch.domain.product.Product;
 import fastcampus.ecommerce.batch.dto.product.upload.ProductUploadCsvRow;
+import fastcampus.ecommerce.batch.service.file.SplitFilePartitioner;
+import fastcampus.ecommerce.batch.util.FileUtils;
 import fastcampus.ecommerce.batch.util.ReflectionUtils;
+import java.io.File;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.partition.PartitionHandler;
+import org.springframework.batch.core.partition.support.TaskExecutorPartitionHandler;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
@@ -36,11 +42,43 @@ public class ProductUploadJobConfiguration {
 
   @Bean
   public Job productUploadJob(JobRepository jobRepository, JobExecutionListener listener,
-      Step productUploadStep) {
+      Step productUploadPartitionStep) {
     return new JobBuilder("productUploadJob", jobRepository)
         .listener(listener)
-        .start(productUploadStep)
+        .start(productUploadPartitionStep)
         .build();
+  }
+
+
+  @Bean
+  public Step productUploadPartitionStep(PartitionHandler filePartitionHandler,
+      Step productUploadStep,
+      JobRepository jobRepository, SplitFilePartitioner splitFilePartitioner) {
+    return new StepBuilder("productUploadPartitionStep", jobRepository)
+        .partitioner(productUploadStep.getName(), splitFilePartitioner)
+        .partitionHandler(filePartitionHandler)
+        .allowStartIfComplete(true)
+        .build();
+  }
+
+
+  @Bean
+  @JobScope
+  public SplitFilePartitioner splitFilePartitioner(
+      @Value("#{jobParameters['inputFilePath']}") String path,
+      @Value("#{jobParameters['gridSize']}") int gridSize) {
+    return new SplitFilePartitioner(FileUtils.splitCsv(new File(path), gridSize));
+  }
+
+  @Bean
+  @JobScope
+  public TaskExecutorPartitionHandler filePartitionHandler(TaskExecutor taskExecutor,
+      Step productUploadStep, @Value("#{jobParameters['gridSize']}") int gridSize) {
+    TaskExecutorPartitionHandler handler = new TaskExecutorPartitionHandler();
+    handler.setTaskExecutor(taskExecutor);
+    handler.setStep(productUploadStep);
+    handler.setGridSize(gridSize);
+    return handler;
   }
 
   @Bean
@@ -65,17 +103,15 @@ public class ProductUploadJobConfiguration {
   @Bean
   @StepScope
   public SynchronizedItemStreamReader<ProductUploadCsvRow> productReader(
-      @Value("#{jobParameters['inputFilePath']}") String path) {
-    FlatFileItemReader<ProductUploadCsvRow> productReader = new FlatFileItemReaderBuilder<ProductUploadCsvRow>().name(
+      @Value("#{stepExecutionContext['file']}") File file) {
+    FlatFileItemReader<ProductUploadCsvRow> fileItemReader = new FlatFileItemReaderBuilder<ProductUploadCsvRow>().name(
             "productReader")
-        .resource(new FileSystemResource(path))
+        .resource(new FileSystemResource(file))
         .delimited()
         .names(ReflectionUtils.getFieldNames(ProductUploadCsvRow.class).toArray(String[]::new))
         .targetType(ProductUploadCsvRow.class)
-        .linesToSkip(1)
         .build();
-    return new SynchronizedItemStreamReaderBuilder<ProductUploadCsvRow>()
-        .delegate(productReader)
+    return new SynchronizedItemStreamReaderBuilder<ProductUploadCsvRow>().delegate(fileItemReader)
         .build();
   }
 
