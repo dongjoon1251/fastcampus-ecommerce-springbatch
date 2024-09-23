@@ -1,8 +1,11 @@
 package fastcampus.ecommerce.batch.util;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -77,6 +80,22 @@ public class FileUtils {
     File tempFile = File.createTempFile(prefix, suffix);
     tempFile.deleteOnExit();
     return tempFile;
+  }
+
+
+  public static void mergeFiles(String header, List<File> files, File outputFile) {
+    try (BufferedOutputStream outputStream = new BufferedOutputStream(
+        new FileOutputStream(outputFile))) {
+      outputStream.write((header + "\n").getBytes());
+      for (File partFile : files) {
+        System.out.println("병합 중: " + partFile.getName());
+        Files.copy(partFile.toPath(), outputStream);
+      }
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }
