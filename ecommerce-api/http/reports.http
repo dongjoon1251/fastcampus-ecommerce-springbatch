@@ -2,3 +2,6 @@
 GET http://localhost:8080/v1/transactions/reports?dt=2024-09-24
 Content-Type: application/json
 
+###일별 상품 현황 보고서
+GET http://localhost:8080/v1/products/reports?dt=2024-09-24
+Content-Type: application/json
