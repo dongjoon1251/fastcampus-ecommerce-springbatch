@@ -1,0 +1,14 @@
+### 주문
+POST http://localhost:8080/v1/orders
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "orderItems": [
+    {
+      "productId": "1727111685047_9c11c683-4726-4908-aa9c-f30ac3f583ab",
+      "quantity": 2
+    }
+  ],
+  "paymentMethod": "CREDIT_CARD"
+}
