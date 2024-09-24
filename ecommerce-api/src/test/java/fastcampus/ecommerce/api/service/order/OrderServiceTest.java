@@ -3,6 +3,7 @@ package fastcampus.ecommerce.api.service.order;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -125,4 +126,50 @@ class OrderServiceTest {
     );
   }
 
+  @Test
+  @DisplayName("주문 완료")
+  void testCompleteOrder() {
+    testOrder.completePayment(true);
+    when(orderRepository.findById(any())).thenReturn(Optional.of(testOrder));
+    when(orderRepository.save(any(Order.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    OrderResult result = orderService.completeOrder(testOrder.getOrderId());
+
+    assertAll(
+        () -> assertEquals(OrderStatus.COMPLETED, result.getOrderStatus()),
+        () -> assertEquals(PaymentStatus.COMPLETED, result.getPaymentStatus()),
+        () -> verify(orderRepository).save(any(Order.class))
+    );
+  }
+
+  @Test
+  @DisplayName("주문 취소")
+  void testCancelOrder() {
+    testOrder.completePayment(true);
+    when(orderRepository.findById(any())).thenReturn(Optional.of(testOrder));
+    when(orderRepository.save(any(Order.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
+
+    OrderResult result = orderService.cancelOrder(testOrder.getOrderId());
+
+    assertAll(
+        () -> assertEquals(OrderStatus.CANCELLED, result.getOrderStatus()),
+        () -> assertEquals(PaymentStatus.REFUNDED, result.getPaymentStatus()),
+        () -> verify(productService).increaseStock("PROD001", 2),
+        () -> verify(orderRepository).save(any(Order.class))
+    );
+  }
+
+  @Test
+  @DisplayName("존재하지 않는 주문 - OrderNotFoundException 발생")
+  void testOrderNotFound() {
+    when(orderRepository.findById(999L)).thenReturn(Optional.empty());
+
+    assertAll(
+        () -> assertThrows(OrderNotFoundException.class,
+            () -> orderService.completePayment(999L, true)),
+        () -> assertThrows(OrderNotFoundException.class, () -> orderService.cancelOrder(999L))
+    );
+  }
 }

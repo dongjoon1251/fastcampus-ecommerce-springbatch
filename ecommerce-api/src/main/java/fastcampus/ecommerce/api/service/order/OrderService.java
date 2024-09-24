@@ -53,4 +53,28 @@ public class OrderService {
       }
     }
   }
+
+
+  @Transactional
+  public OrderResult completeOrder(Long orderId) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new OrderNotFoundException(orderId));
+    order.completeOrder();
+    return save(order);
+  }
+
+  @Transactional
+  public OrderResult cancelOrder(Long orderId) {
+    Order order = orderRepository.findById(orderId)
+        .orElseThrow(() -> new OrderNotFoundException(orderId));
+    order.cancel();
+    recoverStock(order);
+    return save(order);
+  }
+
+  private void recoverStock(Order order) {
+    for (OrderItem orderItem : order.getOrderItems()) {
+      productService.increaseStock(orderItem.getProductId(), orderItem.getQuantity());
+    }
+  }
 }

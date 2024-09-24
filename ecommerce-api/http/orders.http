@@ -28,3 +28,12 @@ Content-Type: application/json
 {
   "success": false
 }
+
+### 주문 완료
+POST http://localhost:8080/v1/orders/1/complete
+Content-Type: application/json
+
+
+### 주문 취소
+POST http://localhost:8080/v1/orders/2/cancel
+Content-Type: application/json
