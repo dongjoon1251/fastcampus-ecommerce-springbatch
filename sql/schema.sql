@@ -20,3 +20,39 @@ CREATE INDEX idx_products_category ON products (category);
 CREATE INDEX idx_products_brand ON products (brand);
 CREATE INDEX idx_products_manufacturer ON products (manufacturer);
 CREATE INDEX idx_products_seller_id ON products (seller_id);
+
+
+CREATE TABLE orders
+(
+    order_id     BIGSERIAL PRIMARY KEY,
+    order_date   TIMESTAMP   NOT NULL,
+    order_status VARCHAR(50) NOT NULL,
+    customer_id  BIGINT
+);
+
+CREATE INDEX idx_orders_customer_id ON orders (customer_id);
+
+CREATE TABLE order_items
+(
+    order_item_id BIGSERIAL PRIMARY KEY,
+    quantity      INTEGER      NOT NULL,
+    unit_price    INTEGER      NOT NULL,
+    product_id    VARCHAR(255) NOT NULL,
+    order_id      BIGINT       NOT NULL
+);
+
+CREATE INDEX idx_order_items_order_id ON order_items (order_id);
+CREATE INDEX idx_order_items_product_id ON order_items (product_id);
+
+
+CREATE TABLE payment
+(
+    payment_id     BIGSERIAL PRIMARY KEY,
+    payment_method VARCHAR(50) NOT NULL,
+    payment_status VARCHAR(50) NOT NULL,
+    payment_date   TIMESTAMP   NOT NULL,
+    amount         INTEGER     NOT NULL,
+    order_id       BIGINT      NOT NULL UNIQUE
+);
+
+CREATE INDEX idx_payment_order_id ON payment (order_id);
