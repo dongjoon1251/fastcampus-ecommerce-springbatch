@@ -98,4 +98,7 @@ public class FileUtils {
     }
   }
 
+  public static List<File> splitLog(File logFile, long fileCount) {
+    return splitFileAfterLineCount(logFile, fileCount, false, ".log");
+  }
 }

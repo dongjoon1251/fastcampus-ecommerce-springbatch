@@ -4,15 +4,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fastcampus.ecommerce.batch.domain.transaction.report.TransactionReport;
 import fastcampus.ecommerce.batch.domain.transaction.report.TransactionReportMapRepository;
 import fastcampus.ecommerce.batch.dto.transaction.log.TransactionLog;
+import fastcampus.ecommerce.batch.service.file.SplitFilePartitioner;
 import fastcampus.ecommerce.batch.service.transaction.TransactionReportAccumulator;
+import fastcampus.ecommerce.batch.util.FileUtils;
+import java.io.File;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.partition.PartitionHandler;
+import org.springframework.batch.core.partition.support.TaskExecutorPartitionHandler;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemReader;
@@ -37,12 +43,42 @@ public class TransactionReportJobConfiguration {
 
   @Bean
   public Job transactionReportJob(JobRepository jobRepository, JobExecutionListener listener,
-      Step transactionAccStep, Step transactionSaveStep) {
+      Step transactionAccPartitionStep, Step transactionSaveStep) {
     return new JobBuilder("transactionReportJob", jobRepository)
         .listener(listener)
-        .start(transactionAccStep)
+        .start(transactionAccPartitionStep)
         .next(transactionSaveStep)
         .build();
+  }
+
+  @Bean
+  public Step transactionAccPartitionStep(PartitionHandler logFilePartitionHandler,
+      Step transactionAccStep,
+      JobRepository jobRepository, SplitFilePartitioner splitLogFilePartitioner) {
+    return new StepBuilder("transactionAccPartitionStep", jobRepository)
+        .partitioner(transactionAccStep.getName(), splitLogFilePartitioner)
+        .partitionHandler(logFilePartitionHandler)
+        .allowStartIfComplete(true)
+        .build();
+  }
+
+  @Bean
+  @JobScope
+  public SplitFilePartitioner splitLogFilePartitioner(
+      @Value("#{jobParameters['inputFilePath']}") String path,
+      @Value("#{jobParameters['gridSize']}") int gridSize) {
+    return new SplitFilePartitioner(FileUtils.splitLog(new File(path), gridSize));
+  }
+
+  @Bean
+  @JobScope
+  public TaskExecutorPartitionHandler logFilePartitionHandler(TaskExecutor taskExecutor,
+      Step transactionAccStep, @Value("#{jobParameters['gridSize']}") int gridSize) {
+    TaskExecutorPartitionHandler handler = new TaskExecutorPartitionHandler();
+    handler.setTaskExecutor(taskExecutor);
+    handler.setStep(transactionAccStep);
+    handler.setGridSize(gridSize);
+    return handler;
   }
 
   @Bean
@@ -64,10 +100,10 @@ public class TransactionReportJobConfiguration {
   @Bean
   @StepScope
   public SynchronizedItemStreamReader<TransactionLog> logReader(
-      @Value("#{jobParameters['inputFilePath']}") String path, ObjectMapper objectMapper) {
+      @Value("#{stepExecutionContext['file']}") File file, ObjectMapper objectMapper) {
     FlatFileItemReader<TransactionLog> logReader = new FlatFileItemReaderBuilder<TransactionLog>().name(
             "logReader")
-        .resource(new FileSystemResource(path))
+        .resource(new FileSystemResource(file))
         .lineMapper(((line, lineNumber) -> objectMapper.readValue(line, TransactionLog.class)))
         .build();
     return new SynchronizedItemStreamReaderBuilder<TransactionLog>()
