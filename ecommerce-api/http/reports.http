@@ -1,0 +1,4 @@
+###일별 거래 보고서
+GET http://localhost:8080/v1/transactions/reports?dt=2024-09-24
+Content-Type: application/json
+
