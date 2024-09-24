@@ -8,7 +8,7 @@
   </appender>
 
   <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>logs/app.log</file>
+    <file>logs/transaction.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <fileNamePattern>logs/transaction.%d{yyyy-MM-dd}.log</fileNamePattern>
       <maxHistory>30</maxHistory>
@@ -25,7 +25,11 @@
   </appender>
 
   <root level="INFO">
-    <appender-ref ref="JSON_FILE"/>
+    <appender-ref ref="STDOUT"/>
   </root>
+
+  <logger name="fastcampus.ecommerce.api.service.transaction.TransactionService" level="INFO">
+    <appender-ref ref="JSON_FILE"/>
+  </logger>
 
 </configuration>

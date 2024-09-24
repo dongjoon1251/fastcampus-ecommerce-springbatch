@@ -14,7 +14,7 @@ Content-Type: application/json
 }
 
 ### 결제 완료
-POST http://localhost:8080/v1/orders/2/payment
+POST http://localhost:8080/v1/orders/6/payment
 Content-Type: application/json
 
 {
@@ -30,7 +30,7 @@ Content-Type: application/json
 }
 
 ### 주문 완료
-POST http://localhost:8080/v1/orders/1/complete
+POST http://localhost:8080/v1/orders/6/complete
 Content-Type: application/json
 
 
