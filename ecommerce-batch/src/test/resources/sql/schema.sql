@@ -20,3 +20,17 @@ CREATE INDEX idx_products_category ON products (category);
 CREATE INDEX idx_products_brand ON products (brand);
 CREATE INDEX idx_products_manufacturer ON products (manufacturer);
 CREATE INDEX idx_products_seller_id ON products (seller_id);
+
+CREATE TABLE transaction_reports
+(
+    transaction_date     date,
+    transaction_type     VARCHAR(50)    NOT NULL,
+    transaction_count    BIGINT         NOT NULL,
+    total_amount         BIGINT         NOT NULL,
+    customer_count       BIGINT         NOT NULL,
+    order_count          BIGINT         NOT NULL,
+    payment_method_count BIGINT         NOT NULL,
+    avg_product_count    DECIMAL(15, 0) NOT NULL,
+    total_item_quantity  BIGINT         NOT NULL,
+    PRIMARY KEY (transaction_date, transaction_type)
+);

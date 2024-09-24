@@ -56,3 +56,19 @@ CREATE TABLE payment
 );
 
 CREATE INDEX idx_payment_order_id ON payment (order_id);
+
+
+
+CREATE TABLE transaction_reports
+(
+    transaction_date     date,
+    transaction_type     VARCHAR(50)    NOT NULL,
+    transaction_count    BIGINT         NOT NULL,
+    total_amount         BIGINT         NOT NULL,
+    customer_count       BIGINT         NOT NULL,
+    order_count          BIGINT         NOT NULL,
+    payment_method_count BIGINT         NOT NULL,
+    avg_product_count    DECIMAL(15, 0) NOT NULL,
+    total_item_quantity  BIGINT         NOT NULL,
+    PRIMARY KEY (transaction_date, transaction_type)
+);
