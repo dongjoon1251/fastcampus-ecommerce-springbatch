@@ -2,6 +2,7 @@ package fastcampus.ecommerce.api.controller.order;
 
 import fastcampus.ecommerce.api.service.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,4 +24,11 @@ public class OrderController {
         orderRequest.toOrderItemCommands(), orderRequest.getPaymentMethod()));
   }
 
+  @PostMapping("/{orderId}/payment")
+  public OrderResponse completePayment(@PathVariable Long orderId,
+      @RequestBody PaymentRequest paymentRequest) {
+    return OrderResponse.from(orderService.completePayment(orderId, paymentRequest.isSuccess()));
+  }
+
+  
 }
