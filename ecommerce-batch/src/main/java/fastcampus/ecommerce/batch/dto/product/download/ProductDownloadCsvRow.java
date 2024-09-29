@@ -37,7 +37,7 @@ public class ProductDownloadCsvRow {
         product.getProductName(),
         product.getSalesStartDate().toString(),
         product.getSalesEndDate().toString(),
-        product.getProductStatus(),
+        product.getProductStatus().name(),
         product.getBrand(),
         product.getManufacturer(),
         product.getSalesPrice(),

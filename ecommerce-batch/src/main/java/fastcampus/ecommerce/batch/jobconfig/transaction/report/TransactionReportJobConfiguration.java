@@ -7,8 +7,8 @@ import fastcampus.ecommerce.batch.dto.transaction.log.TransactionLog;
 import fastcampus.ecommerce.batch.service.file.SplitFilePartitioner;
 import fastcampus.ecommerce.batch.service.transaction.TransactionReportAccumulator;
 import fastcampus.ecommerce.batch.util.FileUtils;
+import jakarta.persistence.EntityManagerFactory;
 import java.io.File;
-import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
@@ -23,8 +23,8 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
+import org.springframework.batch.item.database.JpaItemWriter;
+import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.support.IteratorItemReader;
@@ -146,15 +146,10 @@ public class TransactionReportJobConfiguration {
 
   @Bean
   @StepScope
-  public JdbcBatchItemWriter<TransactionReport> reportWriter(DataSource dataSource) {
-    return new JdbcBatchItemWriterBuilder<TransactionReport>()
-        .dataSource(dataSource)
-        .sql(
-            "INSERT INTO transaction_reports(transaction_date, transaction_type, transaction_count, total_amount, "
-                + "customer_count, order_count, payment_method_count, avg_product_count, total_item_quantity) "
-                + "VALUES (:transactionDate, :transactionType, :transactionCount, :totalAmount, "
-                + ":customerCount, :orderCount, :paymentMethodCount, :avgProductCount, :totalItemQuantity)")
-        .beanMapped()
+  public JpaItemWriter<TransactionReport> reportWriter(EntityManagerFactory entityManagerFactory) {
+    return new JpaItemWriterBuilder<TransactionReport>()
+        .entityManagerFactory(entityManagerFactory)
+        .usePersist(true)
         .build();
   }
 }

@@ -6,8 +6,8 @@ import fastcampus.ecommerce.batch.dto.product.upload.ProductUploadCsvRow;
 import fastcampus.ecommerce.batch.service.file.SplitFilePartitioner;
 import fastcampus.ecommerce.batch.util.FileUtils;
 import fastcampus.ecommerce.batch.util.ReflectionUtils;
+import jakarta.persistence.EntityManagerFactory;
 import java.io.File;
-import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
@@ -22,9 +22,8 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
+import org.springframework.batch.item.database.JpaItemWriter;
+import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.support.SynchronizedItemStreamReader;
@@ -87,7 +86,7 @@ public class ProductUploadJobConfiguration {
       StepExecutionListener stepExecutionListener,
       ItemReader<ProductUploadCsvRow> productReader,
       ItemProcessor<ProductUploadCsvRow, Product> productProcessor,
-      ItemWriter<Product> productWriter,
+      JpaItemWriter<Product> productWriter,
       TaskExecutor taskExecutor) {
     return new StepBuilder("productUploadStep", jobRepository)
         .<ProductUploadCsvRow, Product>chunk(1000, transactionManager)
@@ -121,16 +120,10 @@ public class ProductUploadJobConfiguration {
   }
 
   @Bean
-  public JdbcBatchItemWriter<Product> productWriter(DataSource dataSource) {
-    String sql =
-        "insert into products( product_id, seller_id, category, product_name, sales_start_date, sales_end_date,"
-            + "product_status, brand, manufacturer, sales_price, stock_quantity) "
-            + "VALUES (:productId, :sellerId, :category, :productName, :salesStartDate, :salesEndDate, "
-            + ":productStatus, :brand, :manufacturer, :salesPrice, :stockQuantity) ";
-    return new JdbcBatchItemWriterBuilder<Product>()
-        .dataSource(dataSource)
-        .sql(sql)
-        .beanMapped()
+  public JpaItemWriter<Product> productWriter(EntityManagerFactory entityManagerFactory) {
+    return new JpaItemWriterBuilder<Product>()
+        .entityManagerFactory(entityManagerFactory)
+        .usePersist(true)
         .build();
   }
 

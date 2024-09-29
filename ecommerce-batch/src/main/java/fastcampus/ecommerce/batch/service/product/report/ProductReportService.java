@@ -1,35 +1,35 @@
 package fastcampus.ecommerce.batch.service.product.report;
 
+import fastcampus.ecommerce.batch.domain.product.report.BrandReportRepository;
+import fastcampus.ecommerce.batch.domain.product.report.CategoryReportRepository;
+import fastcampus.ecommerce.batch.domain.product.report.ManufacturerReportRepository;
+import fastcampus.ecommerce.batch.domain.product.report.ProductStatusReportRepository;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class ProductReportService {
 
-  private final JdbcTemplate jdbcTemplate;
+  private final BrandReportRepository brandReportRepository;
+  private final CategoryReportRepository categoryReportRepository;
+  private final ManufacturerReportRepository manufacturerReportRepository;
+  private final ProductStatusReportRepository productStatusReportRepository;
 
   public Long countCategoryReport(LocalDate statDate) {
-    return jdbcTemplate.queryForObject(
-        "select count(*) from category_reports where stat_date = '" + statDate + "'", Long.class);
+    return categoryReportRepository.countByStatDate(statDate);
   }
 
   public Long countBrandReport(LocalDate statDate) {
-    return jdbcTemplate.queryForObject(
-        "select count(*) from brand_reports where stat_date = '" + statDate + "'", Long.class);
+    return brandReportRepository.countByStatDate(statDate);
   }
 
   public Long countManufacturerReport(LocalDate statDate) {
-    return jdbcTemplate.queryForObject(
-        "select count(*) from manufacturer_reports where stat_date = '" + statDate + "'",
-        Long.class);
+    return manufacturerReportRepository.countByStatDate(statDate);
   }
 
   public Long countProductStatusReport(LocalDate statDate) {
-    return jdbcTemplate.queryForObject(
-        "select count(*) from product_status_reports where stat_date = '" + statDate + "'",
-        Long.class);
+    return productStatusReportRepository.countByStatDate(statDate);
   }
 }

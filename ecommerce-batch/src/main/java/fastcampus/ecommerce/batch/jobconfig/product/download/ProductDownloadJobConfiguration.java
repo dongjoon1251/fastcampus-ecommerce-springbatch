@@ -6,10 +6,10 @@ import fastcampus.ecommerce.batch.dto.product.download.ProductDownloadCsvRow;
 import fastcampus.ecommerce.batch.service.product.ProductDownloadPartitioner;
 import fastcampus.ecommerce.batch.util.FileUtils;
 import fastcampus.ecommerce.batch.util.ReflectionUtils;
+import jakarta.persistence.EntityManagerFactory;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
@@ -25,10 +25,8 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.database.JdbcPagingItemReader;
-import org.springframework.batch.item.database.PagingQueryProvider;
-import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
-import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.support.SynchronizedItemStreamWriter;
@@ -83,12 +81,12 @@ public class ProductDownloadJobConfiguration {
   @Bean
   public Step productPagingStep(JobRepository jobRepository,
       PlatformTransactionManager transactionManager,
-      JdbcPagingItemReader<Product> productPagingReader,
+      JpaPagingItemReader<Product> productPagingReader,
       ItemProcessor<Product, ProductDownloadCsvRow> productDownloadProcessor,
       ItemWriter<ProductDownloadCsvRow> productCsvWriter,
       StepExecutionListener stepExecutionListener, TaskExecutor taskExecutor) {
     return new StepBuilder("productPagingStep", jobRepository)
-        .<Product, ProductDownloadCsvRow>chunk(1000, transactionManager)
+        .<Product, ProductDownloadCsvRow>chunk(100000, transactionManager)
         .reader(productPagingReader)
         .processor(productDownloadProcessor)
         .writer(productCsvWriter)
@@ -100,34 +98,18 @@ public class ProductDownloadJobConfiguration {
 
   @Bean
   @StepScope
-  public JdbcPagingItemReader<Product> productPagingReader(
+  public JpaPagingItemReader<Product> productPagingReader(
       @Value("#{stepExecutionContext['minId']}") String minId,
       @Value("#{stepExecutionContext['maxId']}") String maxId,
-      DataSource dataSource,
-      PagingQueryProvider productPagingQueryProvider) {
-    return new JdbcPagingItemReaderBuilder<Product>()
-        .dataSource(dataSource)
+      EntityManagerFactory entityManagerFactory) {
+    return new JpaPagingItemReaderBuilder<Product>()
+        .entityManagerFactory(entityManagerFactory)
         .name("productPagingReader")
-        .queryProvider(productPagingQueryProvider)
+        .queryString(
+            "select p from Product p where p.productId between :minId and :maxId order by p.productId")
         .parameterValues(Map.of("minId", minId, "maxId", maxId))
-        .pageSize(1000)
-        .beanRowMapper(Product.class)
+        .pageSize(100000)
         .build();
-  }
-
-  @Bean
-  public SqlPagingQueryProviderFactoryBean productPagingQueryProvider(
-      DataSource dataSource) {
-    SqlPagingQueryProviderFactoryBean provider = new SqlPagingQueryProviderFactoryBean();
-    provider.setSelectClause(
-        "select product_id, seller_id, category, product_name, sales_start_date, sales_end_date, "
-            + "product_status, brand, manufacturer,sales_price, stock_quantity, "
-            + "created_at, updated_at");
-    provider.setFromClause("from products");
-    provider.setSortKey("product_id");
-    provider.setWhereClause("product_id >= :minId and product_id <= :maxId");
-    provider.setDataSource(dataSource);
-    return provider;
   }
 
   @Bean

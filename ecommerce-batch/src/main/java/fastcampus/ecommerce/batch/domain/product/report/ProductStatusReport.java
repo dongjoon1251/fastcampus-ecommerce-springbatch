@@ -1,19 +1,37 @@
 package fastcampus.ecommerce.batch.domain.product.report;
 
 
-import java.math.BigDecimal;
+import fastcampus.ecommerce.batch.domain.product.ProductStatus;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
-import lombok.Getter;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
-@NoArgsConstructor
+@Entity
+@Table(name = "product_status_reports")
+@Data
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@IdClass(ProductStatusReportId.class)
 public class ProductStatusReport {
 
-  private LocalDate statDate = LocalDate.now();
-  private String productStatus;
-  private Integer productCount;
-  private BigDecimal avgStockQuantity;
+  @Id
+  private LocalDate statDate;
+  @Id
+  @Enumerated(EnumType.STRING)
+  private ProductStatus productStatus;
+  private Long productCount;
+  private Double avgStockQuantity;
+
+  public ProductStatusReport(ProductStatus productStatus, Long productCount,
+      Double avgStockQuantity) {
+    this(LocalDate.now(), productStatus, productCount, avgStockQuantity);
+  }
 }
